@@ -99,6 +99,35 @@ No tutorial. Pick a project and build it from scratch.
 
 ---
 
+## Navigation
+
+### Rustlings
+
+From inside the `rustlings/` directory:
+
+```bash
+rustlings          # watch mode: auto-runs current exercise on file save
+rustlings run      # manually run the current pending exercise
+rustlings hint     # get a hint for the current exercise
+rustlings reset    # reset the current exercise back to its starting state
+rustlings check-all  # check all exercises and update done/pending status
+```
+
+Edit the exercise file in your editor, save it, and rustlings will rerun it automatically in watch mode.
+
+### Rust projects
+
+From inside any project directory (e.g. `guessing_game/`):
+
+```bash
+cargo run      # compile and run
+cargo build    # compile only
+cargo check    # check for errors without producing a binary (faster)
+cargo test     # run tests
+```
+
+---
+
 ## Repo structure
 
 ```
