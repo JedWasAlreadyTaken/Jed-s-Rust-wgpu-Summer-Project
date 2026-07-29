@@ -49,3 +49,26 @@ mod tests {
         assert_eq!(your_order.count, 1);
     }
 }
+
+/*
+What the problem was
+`your_order` needed to be built from `order_template` with only `name` and
+`count` changed, but the starting point was just a TODO comment — writing out
+all seven fields by hand for a struct that's mostly a copy of an existing one
+is exactly what struct update syntax is for.
+
+Why is this a problem?
+`Order` has seven fields. Constructing `your_order` field-by-field, copying five
+of `order_template`'s values verbatim, is verbose and easy to get wrong (miss a
+field, typo a value) compared to saying "same as the template, except these
+two".
+
+Why does `Order { name: ..., count: 1, ..order_template }` fix this?
+The `..order_template` at the end fills in every field not explicitly listed by
+copying/moving it from `order_template`. This keeps construction concise when
+deriving a new value from an existing one with only a few fields changed. It
+can move fields out of the source struct if they're not `Copy` — here
+`order_template.name` is a `String`, but since `your_order` overrides `name`
+itself, `order_template`'s `name` field is never touched, so `order_template`
+stays fully usable afterward for the assertions.
+*/

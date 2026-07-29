@@ -26,7 +26,23 @@ fn main() {
     // You can optionally experiment here.
 }
 
-// Don't change the tests!
+/*
+What the problem was
+The `let identifier = if ... else ...` statement had a compiler error — one of
+its arms likely produced a different type than the others (mixing, say, a
+string in one branch with an integer in another).
+
+Why is this a problem?
+When an `if`/`else if`/`else` chain is used to produce a value for a `let`
+binding, every arm's tail expression must evaluate to the same type. If even
+one arm disagreed, the compiler couldn't decide what type `identifier` should
+be, and the whole `let` would fail to compile.
+
+Why does making every arm return a plain integer (`1`, `2`, `3`, `0`) fix this?
+With every branch producing the same type, the compiler can infer a single
+concrete type for `identifier` and accept the binding — the branches of a
+value-producing `if` chain all have to agree, and here they finally do.
+*/
 #[cfg(test)]
 mod tests {
     use super::*;

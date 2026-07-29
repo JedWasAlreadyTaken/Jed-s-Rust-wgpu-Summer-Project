@@ -93,3 +93,26 @@ mod tests {
         assert!(state.quit);
     }
 }
+
+/*
+What the problem was
+`process` had a TODO where its body should be — `State` already had methods
+for every action (`resize`, `move_position`, `echo`, `change_color`, `quit`),
+but nothing routed an incoming `Message` to the right one.
+
+Why is this a problem?
+The test calls `state.process(Message::Resize { .. })`,
+`state.process(Message::Move(..))`, etc., and expects each to update the
+matching field on `state` — without dispatch logic, none of that happens.
+
+Why does `match message { ... }` fix this?
+Each arm destructures one `Message` variant and calls the matching `State`
+method with the extracted data — pulling `s` out of `Echo(s)`, `point` out of
+`Move(point)`, `{width, height}` out of `Resize`, and so on. `match` on an enum
+must be exhaustive — every variant needs an arm (or a catch-all `_`) — so if a
+new `Message` variant were added later, the compiler would immediately flag
+every `match` that forgot to handle it. That's a much stronger guarantee than
+an `if`/`else if` chain checking a "type" field, or a switch statement with a
+forgotten `default`, and it's the main reason enums + `match` are the idiomatic
+way to model "one of several distinct shapes" in Rust.
+*/

@@ -35,6 +35,29 @@ fn main() {
     // You can optionally experiment here.
 }
 
+/*
+What the problem was
+Both `vec_loop` and `vec_map` were missing the actual doubling logic — `vec_loop`
+had a TODO where the push value should be, and `vec_map`'s closure had a `// ???`
+placeholder instead of the multiplication.
+
+Why is this a problem?
+The tests expect each input element doubled (`[2, 4, 6, 8, 10]` -> `[4, 8, 12,
+16, 20]`); without the multiplication actually written, neither function
+produces that output.
+
+Why does `element * 2` in both places fix this?
+In `vec_loop`, `output.push(element * 2)` inside the `for` loop builds the new
+`Vec` by hand, one push at a time. In `vec_map`, the same `element * 2` inside
+`.iter().map(...)` does the same transformation without a mutable accumulator or
+manual `push` — modeled directly on `vec_map_example`'s `element + 1`. Note
+iterating `input` (a `&[i32]`) with `for element in input` or `.iter()` yields
+`&i32` references, not owned `i32`s — that's why `element * 2` works via
+auto-deref without needing `*element * 2` written out. The `.map().collect()`
+style is the idiomatic Rust way to transform a collection: it reads as "what"
+(map each element) rather than "how" (loop, allocate, push).
+*/
+
 #[cfg(test)]
 mod tests {
     use super::*;

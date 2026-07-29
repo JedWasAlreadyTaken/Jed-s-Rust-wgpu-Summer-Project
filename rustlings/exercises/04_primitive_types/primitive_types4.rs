@@ -17,3 +17,22 @@ mod tests {
         assert_eq!([2, 3, 4], nice_slice);
     }
 }
+
+/*
+What the problem was
+`nice_slice` didn't exist yet — the test needed a slice containing `[2, 3, 4]`
+carved out of the array `a = [1, 2, 3, 4, 5]`, with only a TODO comment in place
+of real code.
+
+Why is this a problem?
+`assert_eq!([2, 3, 4], nice_slice)` needs `nice_slice` to actually be a slice
+holding those three elements, in order — nothing produces that on its own.
+
+Why does `&a[1..4]` fix this?
+`1..4` is a half-open range (includes index 1, excludes index 4), matching
+elements `2, 3, 4`. The `&` means we're borrowing a view into `a`'s existing
+memory rather than copying it into a new array. A slice (`&[T]`) is a fat
+pointer — a pointer plus a length — so `nice_slice` doesn't own any data or need
+its own allocation; it's tied to `a`'s lifetime. This is the same slicing
+syntax and underlying idea used for `&str` (a string slice) later on.
+*/

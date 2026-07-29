@@ -36,6 +36,28 @@ fn fruit_basket(basket: &mut HashMap<Fruit, u32>) {
     }
 }
 
+/*
+What the problem was
+`fruit_basket` had a TODO where the insertion logic should be — the basket
+starts with Apple(4), Mango(2), Lychee(5), and every fruit kind needs at least
+one entry, but the existing three aren't allowed to be touched or overwritten.
+
+Why is this a problem?
+A naive `basket.insert(fruit, 1)` for every fruit kind would overwrite Apple,
+Mango, and Lychee's existing counts back down to 1 — failing the
+"given fruits are not modified" test. Something needs to add only the missing
+kinds (Banana, Pineapple) without disturbing what's already there.
+
+Why does `basket.entry(fruit).or_insert(1)` fix this?
+`.entry()` gets a handle to the slot for that key (vacant or occupied), and
+`.or_insert(1)` fills it with `1` only when vacant, leaving an existing value
+untouched when occupied. This avoids the clunkier pattern of checking
+`.contains_key()` then conditionally `.insert()`-ing, which does two lookups
+and is easy to get wrong. It's also why `Fruit` derives `Hash, PartialEq, Eq` —
+those are the trait bounds a `HashMap` key must satisfy so it can be hashed
+into a bucket and compared for equality on lookup.
+*/
+
 fn main() {
     // You can optionally experiment here.
 }

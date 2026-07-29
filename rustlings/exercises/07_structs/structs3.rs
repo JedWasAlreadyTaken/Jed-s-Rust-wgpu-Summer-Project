@@ -87,3 +87,24 @@ mod tests {
         assert_eq!(package.get_fees(cents_per_gram * 2), 9000);
     }
 }
+
+/*
+What the problem was
+`is_international` and `get_fees` both had return-type TODOs — their bodies
+already computed the right values (a `bool` comparison, a `u32` multiplication),
+but the signatures didn't declare what type came back.
+
+Why is this a problem?
+Same signatures-are-never-inferred rule as the functions section: a method
+whose body clearly produces a `bool` or `u32` still needs `-> bool` / `-> u32`
+written explicitly, or the compiler assumes no return value at all.
+
+Why does adding `-> bool` and `-> u32` fix this?
+It matches the declared return type to what each body actually computes. Both
+methods take `&self` (an immutable borrow of the struct) since they only read
+fields, never mutate the `Package` — methods are just functions defined inside
+an `impl` block that take some form of `self` as their first parameter, and
+`&self` vs `self` vs `&mut self` is the same borrow-vs-own decision as
+move_semantics5, applied to "does this method need to modify its own struct,
+consume it, or just look at it?"
+*/

@@ -23,3 +23,21 @@ mod tests {
         assert_eq!(a, *v);
     }
 }
+
+/*
+What the problem was
+`v` needed to hold the same elements as the array `a = [10, 20, 30, 40]`, using
+the vector macro, but only a TODO comment marked where it should go.
+
+Why is this a problem?
+`assert_eq!(a, *v)` requires `v` to actually contain those four values as a
+`Vec<i32>` — nothing produces that automatically from the array.
+
+Why does `let v = vec![10, 20, 30, 40];` fix this?
+`vec![...]` builds a `Vec<i32>` with the same elements as the array. Unlike the
+array, a `Vec` owns a heap allocation and can grow or shrink at runtime — its
+length isn't part of its type. The test compares `a` (an array) against `*v` (a
+dereferenced `Vec`), which works because a `Vec<i32>` derefs to a `[i32]` slice
+that can be compared against the array's contents — the array vs. `Vec`
+distinction from primitive_types3, now in practice.
+*/

@@ -20,3 +20,20 @@ fn main() {
     let original_price = 51;
     println!("Your sale price is {}", sale_price(original_price));
 }
+
+/*
+What the problem was
+`sale_price`'s signature was originally missing a return type (`fn
+sale_price(price: i64) { ... }`), even though its body clearly produces a value
+via the `if`/`else` tail expressions.
+
+Why is this a problem?
+Same rule as functions2 — signatures are never inferred. A function whose body
+returns something but whose signature omits `->` entirely (implying `-> ()`) is
+a type mismatch: the compiler won't guess that you meant to return `i64` just
+because the body looks like it does.
+
+Why does adding `-> i64` fix this?
+It makes the declared return type match what the body actually produces,
+which the compiler requires to be stated explicitly rather than inferred.
+*/

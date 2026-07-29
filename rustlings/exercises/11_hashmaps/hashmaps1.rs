@@ -20,6 +20,24 @@ fn fruit_basket() -> HashMap<String, u32> {
     basket
 }
 
+/*
+What the problem was
+`basket` had no hash map declared and only one fruit (`banana`) in it — the
+tests require at least 3 distinct fruit types and a total count of at least 5.
+
+Why is this a problem?
+`.insert()` needs a `HashMap` to call it on, and with only bananas, `basket.len()
+>= 3` would fail even once the map existed.
+
+Why does `let mut basket = HashMap::new();` plus more `.insert()` calls fix this?
+`HashMap::new()` creates an empty map that `.insert(key, value)` can then add
+entries to — here `String` keys mapped to `u32` counts. Adding `pear` and
+`apple` on top of the given `banana` brings the type count to 3 and the total
+count to 12, satisfying both tests. Unlike a `Vec`, a `HashMap` gives O(1)
+average-time lookup by key instead of scanning — the right structure for "look
+this up by name" rather than "process these in order".
+*/
+
 fn main() {
     // You can optionally experiment here.
 }

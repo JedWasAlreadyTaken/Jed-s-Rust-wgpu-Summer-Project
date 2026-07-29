@@ -79,3 +79,30 @@ mod tests {
         );
     }
 }
+
+/*
+What the problem was
+`transformer` was just a signature comment (`pub fn transformer(input: ???) ->
+??? { ??? }`) with no real parameter types, return type, or body — and the test
+module didn't yet import `transformer` to call it.
+
+Why is this a problem?
+The test builds a `Vec<(String, Command)>` and expects a `Vec<String>` back,
+with each string transformed according to its paired `Command` — without a real
+signature and matching logic, none of that has anywhere to go. And without a
+`use` bringing `transformer` into the test module's scope, `transformer(input)`
+in the test wouldn't resolve either.
+
+Why does this implementation fix it?
+`pub fn transformer(input: Vec<(String, Command)>) -> Vec<String>` takes
+ownership of the input and returns a fresh `Vec<String>`, using `match` on each
+`Command` variant to decide the transformation: `Uppercase` calls
+`.to_uppercase()`, `Trim` calls `.trim()` then `.to_owned()` (since `.trim()`
+alone returns a borrowed `&str`, and the output needs an owned `String`), and
+`Append(n)` builds `"bar".repeat(n)` and appends it with `format!`.
+`use crate::my_module::transformer;` in the test module pulls the function out
+of the nested module into scope (`crate::` meaning "start from the crate
+root"). This combines several sections at once: enums with data and `match`
+destructuring them (section 08), owned vs. borrowed strings (section 09), and
+collecting into a `Vec` (section 05).
+*/

@@ -29,6 +29,7 @@ mod tests {
         // TODO: Fix this test. How do you get the value contained in the
         // Option?
         let ice_creams = maybe_ice_cream(5).unwrap();
+        // .unwrap() pulls the value out of Some(value), or panics if it's None
 
         assert_eq!(ice_creams, 5); // Don't change this line.
     }
@@ -44,3 +45,27 @@ mod tests {
         assert_eq!(maybe_ice_cream(25), None);
     }
 }
+
+/*
+What the problem was
+`maybe_ice_cream` had to return `Option<u16>` instead of a plain `u16`, because
+there's a real "no answer" case (any hour past 23 is invalid) alongside two valid
+numeric answers (5 scoops, or 0 after closing).
+
+Why is this a problem?
+If the function just returned `u16`, there'd be no honest way to signal "this
+hour doesn't exist" — you'd have to pick some fake sentinel number (like 999) and
+hope every caller remembers to check for it. Nothing forces that check.
+
+Why does Option fix this?
+`Option<u16>` has exactly two shapes: `Some(u16)` when there's a real scoop count,
+`None` when the hour is invalid. The test then has to explicitly unwrap it:
+
+let ice_creams = maybe_ice_cream(5).unwrap();
+
+`.unwrap()` extracts the value inside `Some`, or panics immediately if it's
+`None`. Because you can't accidentally treat an `Option<u16>` as a plain `u16` —
+the compiler won't let you use it in arithmetic or comparisons without first
+unwrapping or matching on it — the "did this actually have a value" check can't
+be silently skipped the way a sentinel value could be.
+*/

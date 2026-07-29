@@ -22,3 +22,21 @@ fn main() {
     println!("The current exercise path will be always shown under the progress bar.");
     println!("You can click on the path to open the exercise file in your editor.");
 }
+
+/*
+What the problem was
+Nothing — this file compiles as-is. It exists purely to confirm the toolchain
+and the rustlings runner both work before any real exercise starts.
+
+Why is this a problem?
+It isn't. But it's worth reading anyway, since it's the first real Rust source
+you'll see: `fn main()` as the entry point, and `println!` as a macro (the `!` is
+part of the name) rather than an ordinary function.
+
+Why does this "fix" work?
+`println!` being a macro is what lets it type-check its format string against
+its arguments at compile time and accept a variable number of arguments — a
+plain function couldn't do either. The banner text is wrapped in `r#"..."#`
+(a raw string literal), which turns off escape-sequence processing, so the
+backslashes in the ASCII art print literally instead of being interpreted.
+*/
