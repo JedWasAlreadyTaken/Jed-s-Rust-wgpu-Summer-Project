@@ -25,7 +25,9 @@ impl ParsePosNonzeroError {
     }
 
     // TODO: Add another error conversion function here.
-    // fn from_parse_int(???) -> Self { ??? }
+    fn from_parse_int(err: ParseIntError) -> Self { 
+        Self::ParseInt(err)
+    }
 }
 
 #[derive(PartialEq, Debug)]
@@ -43,7 +45,7 @@ impl PositiveNonzeroInteger {
     fn parse(s: &str) -> Result<Self, ParsePosNonzeroError> {
         // TODO: change this to return an appropriate error instead of panicking
         // when `parse()` returns an error.
-        let x: i64 = s.parse().unwrap();
+        let x: i64 = s.parse().map_err(ParsePosNonzeroError::from_parse_int)?;
         Self::new(x).map_err(ParsePosNonzeroError::from_creation)
     }
 }
@@ -87,3 +89,14 @@ mod test {
         assert_eq!(PositiveNonzeroInteger::parse("42"), Ok(x));
     }
 }
+
+/*
+What is the Problem
+ParsePosNonzeroError only had one error conversion, as there was no way to trn a ParseIntError to a ParsePosNonzeroError::ParseInt() which is needed to catch cases of Not a Number. Also parse panicked rather than returning an error as .unwrap() caused a crash of the whole probllem rather than retrning Err(ParsePosNonzeroError::ParseInt(_))
+
+Why does fn from_parse_int fix this
+This function allows for error conversion as it is what the map_err() needs in order to compile teh correct error type
+
+Why does let x: i64 = s.parse().map_err(ParsePosNonzeroError::from_parse_int)?; fix the problem?
+Firstly .parse() attempts to convert the string to i64 however a Result<i64, ParseIntError>. map_err() recieves the whole Result from .parse and will act only on the error path in which ParsePosNonzeroError::ParseInt(some_parse_int_error) will be passed through and returned as an Err(), finally the ? is for the unwrapping of the Ok(value) and for Err(e) it immediately returns Err(e)
+*/
