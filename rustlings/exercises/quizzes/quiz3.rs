@@ -12,14 +12,15 @@
 // block to support alphabetical report cards in addition to numerical ones.
 
 // TODO: Adjust the struct as described above.
-struct ReportCard {
-    grade: f32,
+use std::fmt::Display;
+struct ReportCard<T: Display> {
+    grade: T,
     student_name: String,
     student_age: u8,
 }
 
 // TODO: Adjust the impl block as described above.
-impl ReportCard {
+impl<T: Display> ReportCard<T> {
     fn print(&self) -> String {
         format!(
             "{} ({}) - achieved a grade of {}",
@@ -62,3 +63,14 @@ mod tests {
         );
     }
 }
+
+/*
+WHat the problem was
+ In the reportCard Struct, grade was only on a numeric scale and could not allow for alphabetical grades to be displayed in the report
+
+ How does <T> fix this
+ In the instance of ReportCard<T>, grade: T is allowing for any type to be reported per instance. so the numeric ReportCard and the borrowed String ReportCard can both exist in the same struc definition
+
+ How does Display fix this problem
+ firstly display formats specific values denoted with a {} into human readable text and Since T can be subsituted into any typem we cant assume thee compailer can implement display unless specifically told it can and in the example of T: Display, there is that explicit telling which lets the format's {} compile for the generic T 
+*/
