@@ -4,7 +4,7 @@
 // not own their own data. What if their owner goes out of scope?
 
 // TODO: Fix the compiler error by updating the function signature.
-fn longest(x: &str, y: &str) -> &str {
+fn longest<'a>(x:&'a str , y:&'a str ) -> &'a str {
     if x.len() > y.len() {
         x
     } else {
@@ -26,3 +26,10 @@ mod tests {
         assert_eq!(longest("abc", "1234"), "1234");
     }
 }
+/*
+What the problem was 
+for x and y there were u8's for signitures which didnt match how the function was called(with string literals) and the return type &str had no lifetime annotation
+
+how &'a str fixes this problem?
+The 'a is a lifetime parameter, tying together how long x,y and the returned reference is used to remain valid, by merging the 2 i am telling the compiler that the refence will live as long as whichever of either x or y has the shorter lifetime.
+*/
