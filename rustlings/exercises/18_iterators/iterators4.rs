@@ -10,6 +10,7 @@ fn factorial(num: u64) -> u64 {
     // - additional variables
     // For an extra challenge, don't use:
     // - recursion
+    (1..=num).product()
 }
 
 fn main() {
@@ -39,3 +40,11 @@ mod tests {
         assert_eq!(factorial(4), 24);
     }
 }
+
+/*
+What does this challenge want
+this challenge asks us to build a factorial function that returns the factorial of num without some methods like early returns, loops and exta variables, and i went for the extra challenge of no recursion
+
+how does (1..=num).product() Solve this
+the (1..=num) in an inclusive range that starts from 1 to num and in if num = 0, no values will be iterated as the start is greater than the end. and the .product() is a iterator adapter that multiplies every element together, and avoidds the need for an explicit loop, as accumulation is handeled internally.Also if product is used on an empty iterator, 1 is returned, which is exactly what factorial(0) required.
+*/
