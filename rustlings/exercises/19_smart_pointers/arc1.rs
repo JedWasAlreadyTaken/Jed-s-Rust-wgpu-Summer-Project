@@ -23,13 +23,13 @@ fn main() {
     let numbers: Vec<_> = (0..100u32).collect();
 
     // TODO: Define `shared_numbers` by using `Arc`.
-    // let shared_numbers = ???;
+     let shared_numbers = Arc::new(numbers);
 
     let mut join_handles = Vec::new();
 
     for offset in 0..8 {
         // TODO: Define `child_numbers` using `shared_numbers`.
-        // let child_numbers = ???;
+         let child_numbers = Arc::clone(&shared_numbers);
 
         let handle = thread::spawn(move || {
             let sum: u32 = child_numbers.iter().filter(|&&n| n % 8 == offset).sum();
@@ -43,3 +43,26 @@ fn main() {
         handle.join().unwrap();
     }
 }
+
+/*
+What was the problem?
+
+shared_numbers and child_numbers both needed defining. numbers is a plain Vec<u32>, and
+the exercise wants 8 separate threads to each own a pointer to the same underlying vector
+at once, rather than each thread getting its own copy. Rc<T> would normally do that kind
+of shared ownership, but Rc isn't thread-safe - its reference count isn't updated
+atomically, so two threads cloning or dropping an Rc at the same time could corrupt the
+count. Since these 8 threads run concurrently, a thread-safe alternative was needed.
+
+How do Arc::new and Arc::clone fix this?
+
+Arc<T> ("atomically reference counted") works like Rc<T>, but its reference count uses
+atomic operations, so it's safe to clone and drop from multiple threads at once without
+risking a corrupted count. Arc::new(numbers) moves numbers onto the heap and wraps it in
+an Arc, giving shared_numbers a thread-safe shared pointer to it. Inside the loop,
+Arc::clone(&shared_numbers) creates a new Arc pointing at that same underlying vector for
+each thread, incrementing the shared reference count rather than copying the data itself.
+Each child_numbers is then moved into its own thread via the move closure, so every thread
+gets its own Arc handle to the one shared Vec<u32>, which is what let each of the 8
+threads read from the same numbers without needing to duplicate it eight times.
+*/
