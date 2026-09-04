@@ -39,7 +39,7 @@ mod tests {
         let mut input = Cow::from(&vec);
         abs_all(&mut input);
         // TODO: Replace `todo!()` with `Cow::Owned(_)` or `Cow::Borrowed(_)`.
-        assert!(matches!(input, todo!()));
+        assert!(matches!(input, Cow::Borrowed(_)));
     }
 
     #[test]
@@ -52,7 +52,7 @@ mod tests {
         let mut input = Cow::from(vec);
         abs_all(&mut input);
         // TODO: Replace `todo!()` with `Cow::Owned(_)` or `Cow::Borrowed(_)`.
-        assert!(matches!(input, todo!()));
+        assert!(matches!(input, Cow::Owned(_)));
     }
 
     #[test]
@@ -64,6 +64,35 @@ mod tests {
         let mut input = Cow::from(vec);
         abs_all(&mut input);
         // TODO: Replace `todo!()` with `Cow::Owned(_)` or `Cow::Borrowed(_)`.
-        assert!(matches!(input, todo!()));
+        assert!(matches!(input, Cow::Owned(_)));
     }
 }
+
+/*
+What was the problem?
+
+Three tests had a todo!() in place of the expected Cow variant after calling abs_all.
+Cow<T> (Clone-On-Write) can hold either Cow::Borrowed (pointing at existing data without
+copying it) or Cow::Owned (holding its own cloned copy). abs_all only clones into an owned
+vector via input.to_mut() when it actually needs to mutate a value (i.e. when it finds a
+negative number) - if every value is already non-negative, no mutation happens and no
+clone is triggered by that function alone. Each test needed the correct variant filled in
+based on whether abs_all would have mutated its input and whether the Cow started out
+borrowed or already owned.
+
+How do the fixes work?
+
+reference_no_mutation starts from Cow::from(&vec) (borrowed) with all-non-negative values
+([0, 1, 2]), so abs_all never calls to_mut() and input stays Cow::Borrowed(_) - no clone
+was ever needed. owned_no_mutation starts from Cow::from(vec) (owned outright, no &), so
+even though abs_all still doesn't mutate anything (values are already non-negative), the
+Cow was never borrowed in the first place - it stays Cow::Owned(_) simply because it
+started that way, independent of whether to_mut() gets called. owned_mutation also starts
+from Cow::from(vec) (owned) but with a negative value present ([-1, 0, 1]), so to_mut() is
+called - but since the Cow was already Cow::Owned, to_mut() just returns a mutable
+reference to the existing owned data rather than cloning anything new, and it remains
+Cow::Owned(_) either way. So the three tests each test a different one of the two
+independent factors - whether the Cow started borrowed or owned, and whether abs_all
+actually needed to mutate it - and the correct variant follows directly from those two
+facts rather than always requiring an explicit clone to happen.
+*/
