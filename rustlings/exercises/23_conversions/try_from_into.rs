@@ -28,14 +28,26 @@ enum IntoColorError {
 impl TryFrom<(i16, i16, i16)> for Color {
     type Error = IntoColorError;
 
-    fn try_from(tuple: (i16, i16, i16)) -> Result<Self, Self::Error> {}
+    fn try_from(tuple: (i16, i16, i16)) -> Result<Self, Self::Error> {
+        let (r, g, b) = tuple;
+        let red = r.try_into().map_err(|_| IntoColorError::IntConversion)?;
+        let green = g.try_into().map_err(|_| IntoColorError::IntConversion)?;
+        let blue = b.try_into().map_err(|_| IntoColorError::IntConversion)?;
+        Ok(Color { red, green, blue })
+    }
 }
 
 // TODO: Array implementation.
 impl TryFrom<[i16; 3]> for Color {
     type Error = IntoColorError;
 
-    fn try_from(arr: [i16; 3]) -> Result<Self, Self::Error> {}
+    fn try_from(arr: [i16; 3]) -> Result<Self, Self::Error> {
+        let [r, g, b] = arr;
+        let red: u8 = r.try_into().map_err(|_| IntoColorError::IntConversion)?;
+        let green: u8 = g.try_into().map_err(|_| IntoColorError::IntConversion)?;
+        let blue: u8 = b.try_into().map_err(|_| IntoColorError::IntConversion)?;
+        Ok(Self { red, green, blue })
+    }
 }
 
 // TODO: Slice implementation.
@@ -43,7 +55,15 @@ impl TryFrom<[i16; 3]> for Color {
 impl TryFrom<&[i16]> for Color {
     type Error = IntoColorError;
 
-    fn try_from(slice: &[i16]) -> Result<Self, Self::Error> {}
+    fn try_from(slice: &[i16]) -> Result<Self, Self::Error> {
+        if slice.len() != 3 {
+            return Err(IntoColorError::BadLen);
+        }
+        let red = slice[0].try_into().map_err(|_| IntoColorError::IntConversion)?;
+        let green = slice[1].try_into().map_err(|_| IntoColorError::IntConversion)?;
+        let blue = slice[2].try_into().map_err(|_| IntoColorError::IntConversion)?;
+        Ok(Color { red, green, blue })
+    }
 }
 
 fn main() {
@@ -175,3 +195,31 @@ mod tests {
         assert_eq!(Color::try_from(&v[..]), Err(BadLen));
     }
 }
+
+/*
+What was the problem?
+
+The task was to implement `TryFrom` for three different input shapes - a tuple, a fixed
+array, and a slice - each converting `i16` components into a `Color`'s `u8` fields, where
+any value outside `0..=255` should produce `IntoColorError::IntConversion`, and a slice of
+the wrong length should produce `IntoColorError::BadLen`.
+
+How does the implementation address this?
+
+For the tuple and array versions, the input is destructured into its three components
+(`let (r, g, b) = tuple` / `let [r, g, b] = arr`) since both are always exactly 3 elements
+- no length check is needed. Each component is then converted from `i16` to `u8` with
+`.try_into()`, which fails whenever the value doesn't fit in a `u8` (negative, or greater
+than 255). `.map_err(|_| IntoColorError::IntConversion)?` turns that failure into the
+exercise's own error type and immediately returns it via `?`, short-circuiting the
+function before a `Color` is ever built.
+
+The slice version can't rely on its length at compile time, so it checks
+`slice.len() != 3` up front and returns `Err(IntoColorError::BadLen)` if it doesn't match
+- this is what makes `test_slice_excess_length` and `test_slice_insufficient_length` pass.
+After that check, the same per-element `try_into()` + `map_err` pattern converts
+`slice[0]`, `slice[1]`, and `slice[2]` into the `red`, `green`, and `blue` fields.
+
+Because `TryFrom` is implemented for all three types, `TryInto` is available for free,
+which is why `main` can use both `Color::try_from(...)` and `.try_into()` interchangeably.
+*/
