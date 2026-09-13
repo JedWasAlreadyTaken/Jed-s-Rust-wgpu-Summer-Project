@@ -41,7 +41,26 @@ enum ParsePersonError {
 impl FromStr for Person {
     type Err = ParsePersonError;
 
-    fn from_str(s: &str) -> Result<Self, Self::Err> {}
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let parts: Vec<&str> = s.split(",").collect();
+
+        if parts.len() != 2 {
+            return Err(ParsePersonError::BadLen);
+        }
+        let name = parts[0];
+        if name.is_empty() {
+            return Err(ParsePersonError::NoName);
+        }
+        let age = match parts[1].parse() {
+            Ok(age) => age,
+            Err(e) => return Err(ParsePersonError::ParseInt(e)),
+        };
+
+        Ok(Person {
+            name: name.to_string(),
+            age,
+        })
+    }
 }
 
 fn main() {
@@ -111,3 +130,34 @@ mod tests {
         assert_eq!("John,32,man".parse::<Person>(), Err(BadLen));
     }
 }
+
+/*
+What was the problem?
+
+The `from_str` implementation had several small mistakes stacked on top of each other:
+
+1. `return ParsePersonError::BadLen` and `return ParsePersonError::NoName` returned the
+   error variant directly instead of wrapping it in `Err(...)`, but the function's return
+   type is `Result<Self, Self::Err>`, so a bare error variant doesn't type-check.
+2. Several statements were missing their trailing semicolons (`return ...`, and
+   `let name = parts[0]`), which is required for statements that aren't the function's
+   final expression.
+3. `OK(age) => age` used a capital-O `OK`, but the actual `Result` variant is `Ok`.
+4. `ParsePersonError::ParseInt` is a tuple variant that wraps a `ParseIntError` - it can't
+   be returned bare, and the original `Err(_)` arm discarded the underlying parse error
+   instead of keeping it to wrap.
+5. The function had no final expression for the success path, so nothing was ever
+   returned when parsing succeeded.
+
+How does the fix address this?
+
+Each error path now returns `Err(ParsePersonError::Variant)`, matching the function's
+`Result` return type. The `Ok(age) => age` arm uses the correctly-cased `Ok`, and the
+`Err(e) => return Err(ParsePersonError::ParseInt(e))` arm keeps the original
+`ParseIntError` (bound to `e`) so it can be wrapped into `ParsePersonError::ParseInt`
+instead of losing that information. Finally, once `name` and `age` are both valid, the
+function's last expression constructs `Ok(Person { name: name.to_string(), age })`,
+returning the successfully parsed `Person`. This is also why `"Mark,20".parse::<Person>()`
+works in `main` - implementing `FromStr` is what gives `str` the `parse::<Person>()`
+method.
+*/
