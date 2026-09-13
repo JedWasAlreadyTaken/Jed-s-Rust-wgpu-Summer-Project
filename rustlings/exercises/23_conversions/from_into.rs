@@ -34,7 +34,26 @@ impl Default for Person {
 // 5. Parse the second element from the split operation into a `u8` as the age.
 // 6. If parsing the age fails, return the default of `Person`.
 impl From<&str> for Person {
-    fn from(s: &str) -> Self {}
+    fn from(s: &str) -> Self {
+        let parts: Vec<&str> = s.split(",").collect();
+        if parts.len() != 2 {
+            return Person::default();
+        }
+        let name = parts[0];
+        if name.is_empty() {
+            return Person::default();
+        }
+
+        let age = match parts[1].parse() {
+            Ok(age) => age,
+            Err(_) => return Person::default(),
+        };
+
+        Person {
+            name: name.to_string(),
+            age,
+        }
+    }
 }
 
 fn main() {
@@ -128,3 +147,30 @@ mod tests {
         assert_eq!(p.age, 30);
     }
 }
+
+/*
+What was the problem?
+
+The exercise was to implement `From<&str> for Person` so a string like "Mark,20" could be
+parsed into a `Person`, falling back to `Person::default()` for any input that doesn't fit
+the expected shape.
+
+How does the implementation address this?
+
+1. `s.split(",").collect()` breaks the string into parts on each comma, collected into a
+   `Vec<&str>`.
+2. If that split doesn't produce exactly 2 parts (a missing comma, or extra commas like
+   "Mike,32,dog"), the input can't be a valid "name,age" pair, so it falls back to
+   `Person::default()`.
+3. The first part is used as the name.
+4. An empty name (e.g. ",1") is rejected, also falling back to the default.
+5. `parts[1].parse()` attempts to turn the second part into a `u8` for the age, inferred
+   from `Person`'s `age: u8` field.
+6. If parsing fails - either because the text isn't a number (e.g. "twenty") or because it
+   doesn't fit in a `u8` - the `Err` arm of the `match` falls back to the default instead
+   of panicking.
+
+Only once all of these checks pass does the function construct a real `Person` from the
+parsed name and age. Because `From` is implemented, `Into` comes for free, which is why
+`"Gerald,70".into()` works in `main` without a separate `Into` implementation.
+*/
